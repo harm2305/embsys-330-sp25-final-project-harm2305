@@ -1,0 +1,7 @@
+common:
+  # integration_platforms:
+  #   - native_sim
+  tags:
+    - embsys330_fp_tests
+tests:
+  sample.testing.embsys330_fp_tests: {}

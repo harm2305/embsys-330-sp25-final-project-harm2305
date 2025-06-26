@@ -1,0 +1,5 @@
+*/*.backup
+*/*.bak
+*/build
+*/.DS_Store
+*/twister-out*

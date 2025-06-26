@@ -1,0 +1,195 @@
+/*
+   Copyright 2023 Glenn Andrews
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+*/
+
+{
+	"folders": [
+		{
+			"name": "Project",
+			"path": "./app"
+		},
+		{
+			"name": "Zephyr",
+			"path": "../zephyr"
+		},
+		{
+			"name": "Tests",
+			"path": "./tests"
+		},
+		{
+			"path": "../modules"
+		},
+		{
+			"path": "documentation"
+		}
+	],
+	"settings": {
+		// Hush CMake
+		"cmake.configureOnOpen": false,
+
+		// IntelliSense
+		"C_Cpp.default.compilerPath": "C:/Program Files/zephyr-sdk-0.16.9/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
+		"C_Cpp.default.compileCommands": "${workspaceFolder:Project}/build/compile_commands.json",
+
+		// File Associations
+		"files.associations": {}
+	},
+	"tasks": {
+		"version": "2.0.0",
+		"tasks": [
+			{
+				"label": "West Build",
+				"type": "shell",
+				"group": {
+					"kind": "build",
+					"isDefault": true
+				},
+				"command": "${userHome}/zephyrproject/.venv/Scripts/west",
+				"args": [
+					"build",
+					"-p",
+					"auto",
+					"-b",
+					"disco_l475_iot1"
+				],
+				"problemMatcher": [
+					"$gcc"
+				],
+				"options": {"cwd": "${workspaceFolder:Project}"}
+			},
+			{
+				"label": "West Pristine Build",
+				"type": "shell",
+				"group": {
+					"kind": "build",
+					"isDefault": false
+				},
+				"command": "${userHome}/zephyrproject/.venv/Scripts/west",
+				"args": [
+					"build",
+					"-p",
+					"always",
+					"-b",
+					"disco_l475_iot1"
+				],
+				"problemMatcher": [
+					"$gcc"
+				],
+				"options": {"cwd": "${workspaceFolder:Project}"}
+			},
+			{
+				"label": "West Configurable Build",
+				"type": "shell",
+				"group": {
+					"kind": "build",
+				},
+				"command": "${userHome}/zephyrproject/.venv/Scripts/west",
+				"args": [
+					"build",
+					"-p",
+					"${input:pristine}",
+					"-b",
+					"${input:board}"
+				],
+				"problemMatcher": [
+					"$gcc"
+				],
+				"options": {"cwd": "${workspaceFolder:Project}"}
+			},
+			{
+				"label": "West Flash",
+				"type": "shell",
+				"command": "${userHome}/zephyrproject/.venv/Scripts/west",
+				"args": [
+					"flash"
+				],
+				"problemMatcher": [
+					"$gcc"
+				],
+				"options": {"cwd": "${workspaceFolder:Project}"}
+			},
+		],
+		"inputs": [
+			{
+				"id": "board",
+				"type": "promptString",
+				"default": "disco_l475_iot1",
+				"description": "See https://docs.zephyrproject.org/latest/boards/index.html"
+			},
+			{
+				"id": "pristine",
+				"type": "pickString",
+				"description": "Choose when to run a pristine build",
+				"default": "auto",
+				"options": [
+					"auto",
+					"always",
+					"never"
+				]
+			}
+		]
+	},
+	"launch": {
+		"version": "0.2.0",
+		"configurations": [
+			{
+				"name": "Launch",
+				"device": "disco_l475_iot1",
+				"cwd": "${workspaceFolder:Project}",
+				"executable": "build/zephyr/zephyr.elf",
+				"request": "launch",
+				"type": "cortex-debug",
+				"runToEntryPoint": "main",
+				"servertype": "openocd",
+				"configFiles": ["C:/Program Files/OpenOCD/share/openocd/scripts/board/stm32l4discovery.cfg"],
+				"gdbPath": "C:/Program Files/zephyr-sdk-0.16.9/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+				"preLaunchTask": "West Build",
+				"rtos": "auto",
+				"deviceName": "STM32L475",
+			},
+			{
+				"name": "Attach",
+				"device": "disco_l475_iot1",
+				"cwd": "${workspaceFolder:Project}",
+				"executable": "build/zephyr/zephyr.elf",
+				"request": "attach",
+				"type": "cortex-debug",
+				"runToEntryPoint": "main",
+				"servertype": "openocd",
+				"configFiles": ["C:/Program Files/OpenOCD/share/openocd/scripts/board/stm32l4discovery.cfg"],
+				"gdbPath": "C:/Program Files/zephyr-sdk-0.16.9/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+				"rtos": "auto",
+				"deviceName": "STM32L475",
+			},
+		]
+	},
+	"extensions": {
+		"recommendations": [
+			"ms-vscode.cpptools-extension-pack",
+			"ms-python.python",
+			"ms-vscode.vscode-embedded-tools",
+			"ms-vscode.vscode-serial-monitor",
+			"marus25.cortex-debug",
+			"marus25.cortex-debug-dp-stm32l4",
+			"donjayamanne.python-environment-manager",
+			"trond-snekvik.gnu-mapfiles",
+			"nordic-semiconductor.nrf-devicetree",
+			"nordic-semiconductor.nrf-kconfig",
+			"spmeesseman.vscode-taskexplorer",
+			"shd101wyy.markdown-preview-enhanced",
+			"xaver.clang-format",
+		]
+	}
+}
