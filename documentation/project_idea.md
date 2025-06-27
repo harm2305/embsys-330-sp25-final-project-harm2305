@@ -1,5 +1,6 @@
 # Project Idea
-The idea of my project is to develop a Bluetooth beacon detector.
+The idea of my project is to develop a Bluetooth beacon detector. The detector should be
+configurable via CLI to control and allow for recall of previous entries.
 
 A [Bluetooth beacon](https://en.wikipedia.org/wiki/Bluetooth_Low_Energy_beacon) is a low energy Bluetooth
 broadcast that sends out a device's identifier to other nearby electronic devices. Notable uses
@@ -14,4 +15,5 @@ utilizing the following sensors on my board:
 The LCD screen on my board will be used to show the identifier of 3 nearest Bluetooth beacons.
 
 Additionally, I will utilize an SD card with a SQLite database to keep a more comprehensive listing
-of scanned beacons which can be displayed on the LCD screen.
+of scanned beacons which can be displayed on the LCD screen. A database hosted on an SD card will
+allow for persistence of data between device boots.
