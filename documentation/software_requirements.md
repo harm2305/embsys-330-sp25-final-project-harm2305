@@ -14,6 +14,7 @@
     - Clearing of previous observations
     - Enter sleep state
     - Deletion of previously stored observations
+    - Searching of Bluetooth beacons via an identifier
 - In an awake state, a user configurable amount of observations can be recalled with a user action button
     - There is an upper limit to the user configurable amount of observations (to avoid infinite paging)
 - Repeat devices detected should not result in repeat observations
