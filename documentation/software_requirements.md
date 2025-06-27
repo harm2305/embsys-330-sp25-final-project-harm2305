@@ -6,17 +6,34 @@
 - Limited use of external sensors, use what is available on the board to limit costs
 
 ## Functional Requirements
-- Allow retrieval of observations and display on LCD screen
-- Allow configuration of device via a CLI
+- In a default state, the device shows the closest Bluetooth beacons
+- Device can be entered into a "sleep" state via a CLI command
+- Device can be woken up from a "sleep" state by pressing a user action button
+- Allow retrieval of previous observations and display on LCD screen
+- Allow configuration of device via a CLI through various commands with the minimum functionality:
+    - Clearing of previous observations
+    - Enter sleep state
+    - Deletion of previously stored observations
+- In an awake state, a user configurable amount of observations can be recalled with a user action button
+    - There is an upper limit to the user configurable amount of observations (to avoid infinite paging)
+- Repeat devices detected should not result in repeat observations
+- Device configuration should persist across boots
+- In a recall state, repeat button presses should page through more observations
+- In a recall state, after all observations have been viewed, return to default observation state
 
 ## Non-functional Requirements
-- Must guarantee that 1000 observations persist across device boots
+- In a default state, show 5 closest Bluetooth beacons unless otherwise specified by user configuration
+- Must guarantee that at least 1000 observations persist across device boots
 - Data access should not block collection observations
     - Reading/writing data should not block the system preventing new observations
 - LCD screen should be updated with new data in a near-real time fashion, with at most 500ms latency
+- Proximity of devices is measured via [RSSI (received signal strength indicator)](https://en.wikipedia.org/wiki/Received_signal_strength_indicator) values
+- The upper limit of displayable observations is 20
+- In either default or recall state, a page shows at most 5 entries
+
 
 ## Regulatory Compliance
-- The use of wireless communication invites compliance with the FCC
+- The use of wireless communication implies compliance with the FCC
     - As described in FCC part 15 rules:
         - Device must not cause harmful interference
         - Devise must accept harmful interference received, even if it results in malfunction
