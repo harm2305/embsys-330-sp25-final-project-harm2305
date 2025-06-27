@@ -10,9 +10,10 @@ of Bluetooth beacons are:
 
 The goal of my project is to keep a listing of nearby devices that are emitting Bluetooth beacons. I will be
 utilizing the following sensors on my board:
-- SPBTLE-RF Bluetooth module
+- SPBTLE-RF Bluetooth module for beacon detection
+- SD card reader for persistent data storage
 
-The LCD screen on my board will be used to show the identifier of 3 nearest Bluetooth beacons.
+The LCD screen on my board will be used to show nearest Bluetooth beacons.
 
 Additionally, I will utilize an SD card with a SQLite database to keep a more comprehensive listing
 of scanned beacons which can be displayed on the LCD screen. A database hosted on an SD card will
