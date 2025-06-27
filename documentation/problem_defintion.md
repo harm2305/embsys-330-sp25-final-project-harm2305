@@ -3,7 +3,7 @@
 # Problem Statement
 As everyday users, we have many devices around us ranging all sorts of sizes. From Amazon Echo devices to phones to wearables.
 The average person can own upwards of 3 bluetooth devices that they use in their daily lives. The question then becomes,
-how many bluetooth devices are around a user on average?
+how many bluetooth devices are around a user on average? There is a serious implication of privacy and security here.
 
 # Hardware Used
 - SPBTLE-RF Bluetooth module
@@ -12,7 +12,7 @@ how many bluetooth devices are around a user on average?
 - Onboard user action button
 
 # User stories
-- As a user of the device, I want to see the top 3 latest Bluetooth beacons detected on the LCD screen
+- As a user of the device, I want to see the latest Bluetooth beacons detected on the LCD screen
 
 - As a user of the device, I want to be able to press a button to recall recent Bluetooth beacon entries
 
@@ -22,10 +22,14 @@ alter the output shown on the screen such as number of devices shown at any time
 - As a user of the device, I want to be able to clear the database of devices via CLI, so that I can reduce
 memory footprint and gather new readings as needed
 
+- As a user of the device, I want to be able to search for device identifiers through the CLI, so that
+I can data on a particular device or be notified if it has not been detected
+
 # CLI
 The device should be configurable via a serial terminal and alter basic functionality such as how many
 devices are shown at the screen at one time and the maximum number of devices stored. Additionally,
-the CLI should be used to clear out previously stored devices.
+the CLI should be used to clear out previously stored devices or allow for searching of specific
+Bluetooth beacons.
 
 # SD Card & SQLite Database
 The SD card will be used to host a [SQLite](https://sqlite.org/index.html) database that will allow
