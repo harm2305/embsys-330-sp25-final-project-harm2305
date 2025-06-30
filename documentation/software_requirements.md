@@ -8,10 +8,10 @@
 ## Functional Requirements
 - In a default state, the device must show the closest Bluetooth beacons
     - The number of devices must be configurable throug the CLI, with an application defined limit
-- Device must be able to etner a "sleep" state via a CLI command
+- Device must be able to enter a "sleep" state via a CLI command
 - Device must be woken up from a "sleep" state by pressing a user action button
 - The product must allow the retrieval of previous observations and display on LCD screen
-- The product must llow configuration of device via a CLI through various commands with the minimum
+- The product must allow configuration of device via a CLI through various commands with the minimum
 functionality:
     - Clearing of previous observations
     - Enter sleep state
@@ -24,6 +24,8 @@ functionality:
 - In a recall state, repeat button presses should page through more observations
 - In a recall state, after all observations have been viewed, the device must return to 
 the default observation state
+
+TODO: Detail what must be shown on the LCD screen
 
 ## Non-functional Requirements
 - In a default state, the device must 5 closest Bluetooth beacons unless otherwise specified by 
@@ -41,4 +43,4 @@ user configuration
 - The use of wireless communication implies compliance with the FCC
     - As described in FCC part 15 rules:
         - Device must not cause harmful interference
-        - Devise must accept harmful interference received, even if it results in malfunction
+        - Device must accept harmful interference received, even if it results in malfunction
