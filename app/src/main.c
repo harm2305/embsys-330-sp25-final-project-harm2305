@@ -11,14 +11,20 @@
 #include <lvgl.h>
 #include <stdio.h>
 #include <string.h>
+#include <zephyr/bluetooth/bluetooth.h>
 #include <zephyr/kernel.h>
 #include <lvgl_input_device.h>
 
+#include "bluetooth.h"
 #include "counter.h"
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(app);
+
+extern struct k_msgq bt_msgq;
+
+static void bt_scan_detected(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, struct net_buf_simple *ad); 
 
 #ifdef CONFIG_GPIO
 static struct gpio_dt_spec button_gpio = GPIO_DT_SPEC_GET_OR(DT_ALIAS(sw0), gpios, {0});
@@ -139,6 +145,25 @@ int main(void)
 	lv_task_handler();
 	display_blanking_off(display_dev);
 
+	LOG_DBG("Beginning intialization of Bluetooth...");
+	int err = bt_enable(NULL);
+
+	if (err) {
+		LOG_ERR("Unable to initialize Bluetooth (error %d)", err);
+		return 1;
+	}
+
+	LOG_DBG("Successfully initialized Bluetooth");
+
+	struct bt_le_scan_param bt_scan_params = {
+		.type = BT_LE_SCAN_TYPE_PASSIVE,
+		.options = BT_LE_SCAN_OPT_FILTER_DUPLICATE,
+		.interval = BT_GAP_SCAN_SLOW_INTERVAL_2,
+		.window = BT_GAP_SCAN_SLOW_WINDOW_2
+	};
+
+	err = bt_le_scan_start(&bt_scan_params, bt_scan_detected);
+
 	while (1) {
 		if ((counter_value() % 100) == 0U) {
 			sprintf(count_str, "%d", counter_value() / 100U);
@@ -148,4 +173,25 @@ int main(void)
 		lv_task_handler();
 		k_sleep(K_MSEC(10));
 	}
+}
+
+/**
+ * Submits the result of the scan to a work queue for processing later
+ */
+static void bt_scan_detected(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, struct net_buf_simple *ad) {
+	char addr_str[BT_ADDR_LE_STR_LEN];
+	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
+
+	LOG_INF("Received new scan result for %-32s", addr_str);
+
+	struct bt_scan_result scan_result;
+
+	scan_result.addr_str = addr_str;
+	scan_result.rssi = rssi;
+	scan_result.type = type;
+	scan_result.ad = ad;
+
+	LOG_DBG("Queuing an item to the Bluetooth item queue");
+
+	int ret = k_msgq_put(&bt_msgq, &scan_result, K_FOREVER);
 }
