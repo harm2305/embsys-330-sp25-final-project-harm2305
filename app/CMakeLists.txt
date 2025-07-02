@@ -9,6 +9,7 @@ project(embsys330_final_project_app)
 
 target_sources(app PRIVATE src/counter.c)
 target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/bluetooth.c)
 
 # Add custom linker section to relocate framebuffers to SRAM2
 zephyr_linker_sources_ifdef(CONFIG_LV_Z_VBD_CUSTOM_SECTION
