@@ -4,33 +4,134 @@
 
 #include "bluetooth.h"
 
-LOG_MODULE_DECLARE(app);
+LOG_MODULE_REGISTER(bt_scanner, LOG_LEVEL_DBG);
 
-static void process_scan_result(void *, void *, void *);
+static void bt_scan(void *, void *, void *);
+static void bt_scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, struct net_buf_simple *ad);
+static bool extract_bt_device_name_cb(struct bt_data *data, void *user_data);
 
-K_MSGQ_DEFINE(bt_msgq, sizeof(struct bt_scan_result), 16, 1);
+K_EVENT_DEFINE(toggle_scan_type_event);
+K_MSGQ_DEFINE(bt_scan_msgq, sizeof(uint8_t), 1, 1);
 
-K_THREAD_DEFINE(bt_scan_result_tid, BT_THREAD_STACK_SIZE, process_scan_result, NULL, NULL, NULL, BT_THREAD_PRIORITY, 0, 0);
+K_THREAD_DEFINE(bt_scan_thread_tid, BT_SCAN_THREAD_STACK_SIZE, bt_scan, NULL, NULL, NULL, BT_SCAN_THREAD_PRIORITY, 0, 0);
+K_THREAD_STACK_DEFINE(bt_thread_stack_area, BT_SCAN_THREAD_STACK_SIZE);
 
-K_THREAD_STACK_DEFINE(bt_thread_stack_area, BT_THREAD_STACK_SIZE);
+/**
+ * @brief Enables Bluetooth, initializes callbacks, and begins scanning for devices.
+ * Scans will start in active mode and will update as needed.
+ */
+static void bt_scan(void *, void *, void *) {
+    LOG_DBG("Beginning intialization of Bluetooth...");
+	int err = bt_enable(NULL);
 
-struct k_work_q bt_work_q;
+	if (err) {
+		LOG_ERR("Unable to initialize Bluetooth (error %d)", err);
+		return;
+	}
 
-void initialize_bt_work_q() {
-    k_work_queue_init(&bt_work_q);
-    k_work_queue_start(&bt_work_q, bt_thread_stack_area, K_THREAD_STACK_SIZEOF(bt_thread_stack_area), BT_THREAD_PRIORITY, NULL);
-};
+	LOG_DBG("Successfully initialized Bluetooth");
 
-static void process_scan_result(void *, void *, void *) {
+    int enable_active = 1;
 
-    while (1) {
-        struct bt_scan_result scan_result;
+	struct bt_le_scan_param bt_scan_params = {
+		.type = BT_LE_SCAN_TYPE_ACTIVE,
+		.options = BT_LE_SCAN_OPT_FILTER_DUPLICATE,
+		.interval = BT_GAP_SCAN_SLOW_INTERVAL_2,
+		.window = BT_GAP_SCAN_SLOW_WINDOW_2
+	};
 
-        if (k_msgq_get(&bt_msgq, &scan_result, K_NO_WAIT) == 0) {
-            LOG_INF("Device found: %s (RSSI %d), type %u, AD data len %u\n",
-	           scan_result.addr_str, scan_result.rssi, scan_result.type, scan_result.ad->len);
+	err = bt_le_scan_start(&bt_scan_params, bt_scan_cb);
+
+    while(1) {
+        if (k_event_wait(&toggle_scan_type_event, 1, true, K_FOREVER)) {
+            enable_active = !enable_active;
+
+            if (enable_active) {
+                LOG_DBG("Received request to set BT scan type to active");
+                bt_scan_params.type = BT_LE_SCAN_TYPE_ACTIVE;
+            } else {
+                LOG_INF("Recevied request to set BT scan type to passive");
+                bt_scan_params.type = BT_LE_SCAN_TYPE_PASSIVE;
+            }
+
+            LOG_DBG("Restarting Bluetooth scanning due to scan type change");
+
+            // Restart scan with new parameters
+            err = bt_le_scan_stop();
+
+            if (err) {
+                LOG_ERR("Error %d: Failed to stop Bluetooth scanning", err);
+                continue;
+            }
+
+            err = bt_le_scan_start(&bt_scan_params, bt_scan_cb);
+
+            if (err) {
+                LOG_ERR("Error %d: Failed to start Bluetooth scanning", err);
+            }
+
+            LOG_DBG("Successfully restarted Bluetooth scanning with new scan type");
         }
-
-        k_msleep(100);
     }
+}
+
+/**
+ * Callback that processes a Bluetooth scan result
+ * and submits to a queue for processing later
+ */
+static void bt_scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, struct net_buf_simple *ad) {
+	char addr_str[BT_ADDR_LE_STR_LEN];
+	char name[BT_MAX_DEVICE_NAME_LEN];
+
+	bt_addr_le_to_str(addr, addr_str, sizeof(addr_str));
+	bt_data_parse(ad, extract_bt_device_name_cb, name);
+
+	// LOG_INF("Device found: %s with address %s (RSSI %d), type %u, AD data len %u",
+	// 	name, addr_str, rssi, type, ad->len);
+
+	// struct bt_scan_result scan_result;
+	
+	// scan_result.addr_str = addr_str;
+	// scan_result.rssi = rssi;
+	// scan_result.type = type;
+	// scan_result.ad = ad;
+
+	// LOG_DBG("Queuing an item to the Bluetooth item queue");
+
+	// int ret = k_msgq_put(&bt_msgq, &scan_result, K_FOREVER);
+}
+
+// static void process_scan_result(void *, void *, void *) {
+
+//     while (1) {
+//         struct bt_scan_result scan_result;
+
+//         if (k_msgq_get(&bt_scan_msgq, &scan_result, K_NO_WAIT) == 0) {
+//             char name[BT_MAX_DEVICE_NAME_LEN];
+
+//             struct net_buf_simple *ad = scan_result.ad;
+
+//             bt_data_parse(ad, extract_bt_device_name_cb, name);
+
+//             // LOG_INF("Device found: %s with address %s (RSSI %d), type %u, AD data len %u\n",
+// 	        //    name, scan_result.addr_str, scan_result.rssi, scan_result.type, scan_result.ad->len);
+//         }
+
+//         k_msleep(100);
+//     }
+// }
+
+static bool extract_bt_device_name_cb(struct bt_data *data, void *user_data) {
+    char *name = user_data;
+
+    if (data->type != BT_DATA_NAME_COMPLETE && data->type != BT_DATA_NAME_SHORTENED) {
+        return false;
+    }
+
+    size_t len = MIN(data->data_len, BT_MAX_DEVICE_NAME_LEN - 1);
+    memcpy(name, data->data, len);
+    // Manually terminate the string to account for strings shorter than BT_MAX_DEVICE_NAME_LEN - 1 
+    name[len] = '\0';
+
+    return true;
 }
