@@ -11,6 +11,7 @@
  */
 struct bt_scan_result {
     char *addr_str;
+    char *device_name;
     int8_t rssi;
     uint8_t type;
     struct net_buf_simple *ad;
