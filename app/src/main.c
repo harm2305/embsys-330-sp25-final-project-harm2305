@@ -33,7 +33,7 @@ static void button_isr_callback(const struct device *port, struct gpio_callback 
 	ARG_UNUSED(cb);
 	ARG_UNUSED(pins);
 
-	uint32_t events = k_event_set(&toggle_scan_type_event, 1);
+	k_event_set(&toggle_scan_type_event, 1);
 }
 #endif /* CONFIG_GPIO */
 
