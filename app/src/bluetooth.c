@@ -95,7 +95,7 @@ static void bt_scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, stru
 	scan_result.type = type;
 	scan_result.ad = ad;
 
-    strcpy(scan_result.device_name, name);
+    strncpy(scan_result.device_name, name, BT_MAX_DEVICE_NAME_LEN - 1);
 
 	LOG_DBG("Queuing an item to the Bluetooth item queue");
 
@@ -129,12 +129,12 @@ static bool extract_bt_device_name_cb(struct bt_data *data, void *user_data) {
     char *name = user_data;
 
     if (data->type != BT_DATA_NAME_COMPLETE && data->type != BT_DATA_NAME_SHORTENED) {
-        strcpy(name, "unknown");
+        strncpy(name, "unknown", BT_MAX_DEVICE_NAME_LEN - 1);
         return false;
     }
 
     size_t len = MIN(data->data_len, BT_MAX_DEVICE_NAME_LEN - 1);
-    memcpy(name, data->data, len);
+    strncpy(name, data->data, len);
 
     return true;
 }

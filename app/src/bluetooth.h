@@ -11,7 +11,7 @@
  */
 struct bt_scan_result {
     char *addr_str;
-    char *device_name;
+    char device_name[BT_MAX_DEVICE_NAME_LEN];
     int8_t rssi;
     uint8_t type;
     struct net_buf_simple *ad;
@@ -28,7 +28,7 @@ struct bt_scan_result {
  */
 struct bt_scan_obvs {
     char *addr;
-    char *device_name;
+    char device_name[BT_MAX_DEVICE_NAME_LEN];
     int8_t rssi;
     uint8_t surrogate_key;
     int64_t sys_tick_elapsed;
