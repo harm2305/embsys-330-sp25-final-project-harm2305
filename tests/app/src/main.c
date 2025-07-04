@@ -117,9 +117,9 @@ ZTEST_F(embsys330_fp_tests, test_list_insert) {
 	node3->rssi = -30;
 	strncpy(node3->device_name, "node3", BT_MAX_DEVICE_NAME_LEN);
 
-	append(&head, node1);
-	append(&head, node2);
-	append(&head, node3);
+	upsert(&head, node1);
+	upsert(&head, node2);
+	upsert(&head, node3);
 
 	int length = len(head);
 
@@ -149,9 +149,9 @@ ZTEST_F(embsys330_fp_tests, test_list_sort) {
 	node3->rssi = -20;
 	strncpy(node3->device_name, "node3", BT_MAX_DEVICE_NAME_LEN);
 
-	append(&head, node1);
-	append(&head, node2);
-	append(&head, node3);
+	upsert(&head, node1);
+	upsert(&head, node2);
+	upsert(&head, node3);
 
 	int length = len(head);
 
@@ -165,6 +165,42 @@ ZTEST_F(embsys330_fp_tests, test_list_sort) {
 
 	temp = temp->next;
 	zassert_equal(temp->data->rssi, -30, "Third RSSI value of %d does not match expected -30", temp->data->rssi);
+}
+
+/**
+ * Test the update behavior of a node
+ */
+ZTEST_F(embsys330_fp_tests, test_update) {
+	struct datum *head = fixture->head;
+
+	struct bt_scan_obsv *node1 = malloc(sizeof(struct bt_scan_obsv));
+	node1->addr = "addr1";
+	node1->rssi = -10;
+	strncpy(node1->device_name, "node1", BT_MAX_DEVICE_NAME_LEN);
+
+	struct bt_scan_obsv *node2 = malloc(sizeof(struct bt_scan_obsv));
+	node2->addr = "addr2";
+	node2->rssi = -20;
+	strncpy(node2->device_name, "node2", BT_MAX_DEVICE_NAME_LEN);
+
+	struct bt_scan_obsv *node3 = malloc(sizeof(struct bt_scan_obsv));
+	node3->addr = "addr3";
+	node3->rssi = -20;
+	strncpy(node3->device_name, "node3", BT_MAX_DEVICE_NAME_LEN);
+
+	upsert(&head, node1);
+	upsert(&head, node2);
+	upsert(&head, node3);
+
+	zassert_equal(head->data->rssi, -10, "First RSSI value of %d does not match expected -10", head->data->rssi);
+
+	node1->rssi = -50;
+	upsert(&head, node1);
+
+	int length = len(head);
+	zassert_equal(length, 3, "Length of %d does not match expected length of 3", length);
+
+	zassert_equal(head->data->rssi, -20, "First RSSI value of %d does not match expected -20 after upsert operation", head->data->rssi);
 }
 
 /**
@@ -188,9 +224,9 @@ ZTEST_F(embsys330_fp_tests, test_zero_retrieval) {
 	node3->rssi = -20;
 	strncpy(node3->device_name, "node3", BT_MAX_DEVICE_NAME_LEN);
 
-	append(&head, node1);
-	append(&head, node2);
-	append(&head, node3);
+	upsert(&head, node1);
+	upsert(&head, node2);
+	upsert(&head, node3);
 
 	struct datum *retrieval_list = get(head, 0);
 
@@ -218,10 +254,9 @@ ZTEST_F(embsys330_fp_tests, test_nonzero_retrieval) {
 	node3->rssi = -20;
 	strncpy(node3->device_name, "node3", BT_MAX_DEVICE_NAME_LEN);
 
-	append(&head, node1);
-	append(&head, node2);
-	append(&head, node3);
-
+	upsert(&head, node1);
+	upsert(&head, node2);
+	upsert(&head, node3);
 
 	struct datum *retrieval_list = get(head, 2);
 
@@ -249,12 +284,12 @@ ZTEST_F(embsys330_fp_tests, test_excessive_retrieval) {
 	node3->rssi = -20;
 	strncpy(node3->device_name, "node3", BT_MAX_DEVICE_NAME_LEN);
 
-	append(&head, node1);
-	append(&head, node2);
-	append(&head, node3);
-
+	upsert(&head, node1);
+	upsert(&head, node2);
+	upsert(&head, node3);
 
 	struct datum *retrieval_list = get(head, 100);
 
-	zassert_equal(len(retrieval_list), 3, "Retrieval of 100 nodes from a list of length 100 returns %d nodes", len(retrieval_list));
+	zassert_equal(len(head), 3, "Original list of length %d does not match expected length of 3", len(head));
+	zassert_equal(len(retrieval_list), 3, "Retrieval of 100 nodes from a list of length 3 returns %d nodes, should return 3", len(retrieval_list));
 }
