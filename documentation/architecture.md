@@ -22,8 +22,8 @@ and high level interfaces. For this product, we will be focusing on the Generic 
 
 ![Bluetooth Host protocol & profile layers](images/ble_host_layers.png)
 
-The GAP provides use ways to for our device to be connection or connection-less oriented.
-We will be using a connection-less observer profile as an observer.
+The GAP provides us ways to for our device to be connection or connection-less oriented.
+We will be using a connection-less observer GAP.
 
 This GAP configuration will give us the capability to scan for advertising packets around us
 without having to send one back. This reduces power consumption as well as CPU usage.
@@ -34,13 +34,15 @@ another thread.
 
 ### Passive vs Active Scanning
 Passive scanning involves only listening for advertising packets without sending any scan requests. This
-allows for lower power consumption and is faster. However, most passive scan packets do not include names
+allows for lower power consumption and is faster. However, most passive scan packets do not include information
 such as device name.
 
-Active scanning will detect a advertising packet and then issue a scan response in return to obtain more
-information. This will often times include information such as device name or custom service information.
-The downside of this is that it requires more power, increases discovery time, and potentially causes
-more interference which may be in violation of regulatory compliance.
+Active scanning will detect a advertising packet and then issue a scan request in return to obtain more
+information. The scan request response packet will often times include information such as device name
+or custom service information. It is up to the advertiser to choose to respond to the scan request so
+it is not always a guarantee that more information will be obtained. The downside of this is that it
+requires more power, increases discovery time, and potentially causes more interference which may be
+in violation of regulatory compliance.
 
 ## Limitations of the STM52L475
 The Bluetooth module on the STM52L475 device only supports Bluetooth 4.1. This means we are not able to utilize
@@ -67,10 +69,11 @@ As detailed in the requirements, repeat devices should not count as "new" observ
 already exist in the database, its RSSI value must be updated with the new one. If it does not exist,
 insert it into the database. This is referred to internally as an "upsert" operation.
 
-It is important to note that simple database is **NOT** thread safe. Careful consideration must be taken on
-the design of the list and its uses to ensure that memory is not corrupted.
+It is important to note that this simple database is **NOT** thread safe. Careful consideration 
+must be taken on the design of the list and its uses to ensure that memory is not corrupted.
 
-This linked list will implemented on the heap so there are memory considerations to be careful of.
+This linked list will be implemented on the heap so there are memory considerations to be careful of
+such as appropriate heap sizing.
 
 ## Process Flow of Incoming Scans to Storage in Database
 New advertising packets are detected by the Bluetooth sensor. Zephyr will trigger a callback for each detected packet.
