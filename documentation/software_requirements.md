@@ -2,42 +2,29 @@
 
 ## Architectural
 - Use of an LCD shield to provide a user interface
-- Use of an external SD card for peristent data storage
-- Limited use of external sensors, use what is available on the board to limit costs
+- Use of a Bluetooth sensor to gather beacon advertising packets
+- Use of a USART terminal to interface with the device
+- Use of an onboard user action button to toggle between scan types
 
 ## Functional Requirements
-- In a default state, the device must show the closest Bluetooth beacons
-    - The number of devices must be configurable throug the CLI, with an application defined limit
-- Device must be able to enter a "sleep" state via a CLI command
-- Device must be woken up from a "sleep" state by pressing a user action button
-- The product must allow the retrieval of previous observations and display on LCD screen
-- The product must allow configuration of device via a CLI through various commands with the minimum
-functionality:
-    - Clearing of previous observations
-    - Enter sleep state
-    - Deletion of previously stored observations
-    - Searching of Bluetooth beacons via an identifier
-- In an awake state, a user configurable amount of observations must be recalled with a user action button
-    - There is an upper limit to the user configurable amount of observations (to avoid infinite paging)
+- Device should boot up in active scanning mode
+- User button should toggle between active and passive scanning modes
+    - Active consumes more power but allows for better scan readings
+        - Active scan readings typically include device names whereas passive only includes
+        address type
+- Current scan mode should be visible on the LCD screen
+- The product must allow the retrieval of previous observations and display on a USART terminal
 - Repeat devices detected should not result in repeat observations
-- Device configuration should persist across boots
-- In a recall state, repeat button presses should page through more observations
-- In a recall state, after all observations have been viewed, the device must return to 
-the default observation state
-
-TODO: Detail what must be shown on the LCD screen
+- LCD screen should display the closest Bluetooth beacons detected
+- LCD screen readings should include address, device name (if available), and RSSI signal strength
+- Allow for clearing of the in memory database to reduce memory footprint
 
 ## Non-functional Requirements
-- In a default state, the device must 5 closest Bluetooth beacons unless otherwise specified by 
-user configuration
-- Must guarantee that at least 1000 observations persist across device boots
+- The 5 closest Bluetooth devices should be shown on the LCD screen
 - Data access should not block collection observations
     - Reading/writing data should not block the system preventing new observations
 - LCD screen should be updated with new data in a near-real time fashion, with at most 500ms latency
 - Proximity of devices must be  measured via [RSSI (received signal strength indicator)](https://en.wikipedia.org/wiki/Received_signal_strength_indicator) values
-- The upper limit of displayable observations should be 20
-- In either default or recall state, a page must show at most 5 entries
-
 
 ## Regulatory Compliance
 - The use of wireless communication implies compliance with the FCC
