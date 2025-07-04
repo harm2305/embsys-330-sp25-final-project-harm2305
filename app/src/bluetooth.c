@@ -4,7 +4,7 @@
 
 #include "bluetooth.h"
 
-LOG_MODULE_REGISTER(bt_scanner, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(bt_scanner);
 
 static bool extract_bt_device_name_cb(struct bt_data *data, void *user_data);
 static void bt_process(void *, void *, void *);
@@ -17,6 +17,8 @@ K_MSGQ_DEFINE(bt_process_msgq, sizeof(struct bt_scan_result), 16, 1);
 K_THREAD_DEFINE(bt_scan_thread_tid, BT_SCAN_THREAD_STACK_SIZE, bt_scan, NULL, NULL, NULL, BT_SCAN_THREAD_PRIORITY, 0, 0);
 K_THREAD_DEFINE(bt_process_thread_tid, BT_PROCESS_THREAD_STACK_SIZE, bt_process, NULL, NULL, NULL, BT_PROCESS_THREAD_PRIORITY, 0, 0);
 
+
+static int enable_active = 1;
 
 /**
  * @brief Enables Bluetooth, initializes callbacks, and begins scanning for devices.
@@ -32,8 +34,6 @@ static void bt_scan(void *, void *, void *) {
 	}
 
 	LOG_DBG("Successfully initialized Bluetooth");
-
-    int enable_active = 1;
 
 	struct bt_le_scan_param bt_scan_params = {
 		.type = BT_LE_SCAN_TYPE_ACTIVE,
@@ -137,4 +137,16 @@ static bool extract_bt_device_name_cb(struct bt_data *data, void *user_data) {
     strncpy(name, data->data, len);
 
     return true;
+}
+
+/**
+ * Returns the current scan mode. Can only ever either
+ * BT_LE_SCAN_ACTIVE or BT_LE_SCAN_PASSIVE.
+ */
+bool get_current_scan_mode() {
+    if (enable_active) {
+        return true;
+    }
+    
+    return false;
 }

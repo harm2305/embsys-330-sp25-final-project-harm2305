@@ -4,6 +4,7 @@
 #define BT_PROCESS_THREAD_PRIORITY 4
 #define BT_SCAN_THREAD_STACK_SIZE 1024
 #define BT_SCAN_THREAD_PRIORITY 5
+#define MAX_SCAN_LABEL_SIZE 16
 
 /**
  * @brief A struct representing Bluetooth advertisements from
@@ -30,6 +31,12 @@ struct bt_scan_obvs {
     char *addr;
     char device_name[BT_MAX_DEVICE_NAME_LEN];
     int8_t rssi;
-    uint8_t surrogate_key;
     int64_t sys_tick_elapsed;
 };
+
+
+/**
+ * Returns the current scan mode. Can only ever either
+ * BT_LE_SCAN_ACTIVE or BT_LE_SCAN_PASSIVE.
+ */
+ bool get_current_scan_mode();
