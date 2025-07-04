@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <zephyr/kernel.h>
 
 #include "bluetooth.h"
@@ -8,8 +9,8 @@ static void merge_sort(struct datum **head);
 static void split_list(struct datum *source, struct datum **front, struct datum **back);
 static struct datum * sorted_merge(struct datum *a, struct datum *b);
 
-void append(struct datum **head, struct bt_scan_obsv *data) {
-    struct datum *new_node = k_malloc(sizeof(struct bt_scan_obsv));
+void upsert(struct datum **head, struct bt_scan_obsv *data) {
+    struct datum *new_node = k_malloc(sizeof(struct datum));
 
     new_node->data = data;
     new_node->next = NULL;
@@ -21,10 +22,19 @@ void append(struct datum **head, struct bt_scan_obsv *data) {
 
     struct datum *temp = *head;
     while(temp->next != NULL) {
+        char *temp_dev_name = temp->data->device_name;
+
+        // There is an existing node with a matching device name, update RSSI
+        if (strcmp(temp_dev_name, data->device_name) == 0) {
+            temp->data->rssi = data->rssi;
+            merge_sort(head);
+            return;
+        }
+
         temp = temp->next;
     };
 
-    temp->next = new_node;
+    temp->next = new_node; 
 
     merge_sort(head);
 }
@@ -128,7 +138,9 @@ struct datum * get(struct datum *head, int n) {
 
     for (int i = 0; i < num_nodes_get; i++) {
         struct bt_scan_obsv *bt_data = temp->data;
-        append(&result, bt_data);
+        upsert(&result, bt_data);
+
+        temp = temp->next;
     }
 
     return result;
