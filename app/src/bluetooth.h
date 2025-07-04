@@ -27,7 +27,7 @@ struct bt_scan_result {
  * surrogate_key and sys_tick_elapsed sufficiently identifies a unique slice
  * of time for an observation.
  */
-struct bt_scan_obvs {
+struct bt_scan_obsv {
     char *addr;
     char device_name[BT_MAX_DEVICE_NAME_LEN];
     int8_t rssi;
