@@ -36,7 +36,8 @@ struct bt_scan_obsv {
 
 
 /**
- * Returns the current scan mode. Can only ever either
- * BT_LE_SCAN_ACTIVE or BT_LE_SCAN_PASSIVE.
+ * @brief Returns the current scan mode.
+ * 
+ * @returns True if currently in active scan mode, false if passive.
  */
  bool get_current_scan_mode();
