@@ -131,6 +131,10 @@ static struct datum * sorted_merge(struct datum *a, struct datum *b) {
 }
 
 struct datum * get(struct datum *head, int n) {
+    if (n < 0) {
+        n = 0;
+    }
+
     int num_nodes_get = MIN(n, len(head));
 
     struct datum *temp = head;
