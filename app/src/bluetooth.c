@@ -39,7 +39,7 @@ static void bt_scan(void *, void *, void *) {
 		.type = BT_LE_SCAN_TYPE_ACTIVE,
 		.options = BT_LE_SCAN_OPT_FILTER_DUPLICATE,
 		.interval = BT_GAP_SCAN_SLOW_INTERVAL_2,
-		.window = BT_GAP_SCAN_SLOW_WINDOW_2
+		.window = BT_GAP_SCAN_FAST_WINDOW
 	};
 
 	err = bt_le_scan_start(&bt_scan_params, bt_scan_cb);
