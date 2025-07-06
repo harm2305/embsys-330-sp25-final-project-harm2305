@@ -148,12 +148,18 @@ and `struct datum * get(struct datum *head, int n)`.
 
 The `upsert` operation will insert new nodes if they do not exist in the list already. If a node does exist,
 its RSSI value is updated instead of adding a new node. The predicate for checking if a node exists
-is simply comparing device addresses since those should be sufficiently unique.
+is simply comparing device addresses since those should be sufficiently unique. Each upsert operation
+triggers a sort operation as well. Sorting is performed by a merge sort algorithm which allows us quickly
+sort the list at the cost of CPU computation. Since our application is fairly small, we can afford this
+hit on CPU cycles.
+
+The list is sorted by RSSI values, with the strongest values being at the start of the list. With our
+Bluetooth module, the closer a number is to 0, the stronger the signal is. 
 
 The `get` operation will retrieve a certain number of observations from the database. This is useful
-both for the LCD display and the USART terminal which will issue a command to retrieve a certian number
+both for the LCD display and the USART terminal which will issue a command to retrieve a certain number
 of observations. If the provided value exceeds the number of observations in the database, then all
-of the observations are returned. If a value is `<= 0`, then no observations are returned.
+of the observations are returned. If a value is `<= 0`, then `NULL` pointer is returned instead.
 
 For the get operation, the pointer returned points to a new list that is a copy from the database. This is
 important to avoid a client accidentally modifying any data or breaking internal tracking.
@@ -187,15 +193,15 @@ The following diagram details the superloop behavior of the main thread:
 
 # CLI
 The CLI will provide two commands part of a command set:
-- `db get {n}`
-- `db clear`
+- `database get {n}`
+- `database clear`
 
 All commands are issued via USART terminal
 
-## `db get {n}`
+## `database get {n}`
 Retrieves `n` observations from the database. Will return an error if a value `< 1` is provided. This
 command will output the collected observations in a CSV format to the terminal for easy viewing.
 
-## `db clear`
+## `database clear`
 The DB clear command will wipe the contents of the in-memory database as well as any tracked metrics
 such as total scans and unique devices.
