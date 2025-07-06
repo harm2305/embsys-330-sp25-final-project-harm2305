@@ -1,4 +1,7 @@
 // Device name cannot be longer than 30 due to the size of a packet
+#define BT_DATA_REQ_CLEAR 1
+#define BT_DATA_REQ_GET 2
+#define BT_DATA_REQ_PRINT 3
 #define BT_MAX_DEVICE_NAME_LEN 30
 #define BT_PROCESS_THREAD_STACK_SIZE 1024
 #define BT_PROCESS_THREAD_PRIORITY 4
@@ -31,7 +34,24 @@ struct bt_scan_obsv {
     char *addr;
     char device_name[BT_MAX_DEVICE_NAME_LEN];
     int8_t rssi;
-    int64_t sys_tick_elapsed;
+};
+
+/**
+ * @brief A struct representing a data request to the Bluetooth data
+ * processing request.
+ * 
+ * The get_count property should be the number of observations to be retrieved
+ * from the database. This property is not looked at when request_type
+ * is BT_DATA_REQ_CLEAR.
+ * 
+ * The result property should be a pointer that will hold the result of
+ * a BT_DATA_REQ_GET operation. This property will be unchanged in cases
+ * of BT_DATA_REQ_CLEAR.
+ */
+struct bt_data_req {
+    int request_type;
+    int get_count;
+    struct datum * result_list;
 };
 
 

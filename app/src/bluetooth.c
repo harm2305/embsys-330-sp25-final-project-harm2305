@@ -3,6 +3,7 @@
 #include <zephyr/logging/log.h>
 
 #include "bluetooth.h"
+#include "bt_db.h"
 
 LOG_MODULE_REGISTER(bt_scanner);
 
@@ -13,11 +14,12 @@ static void bt_scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, stru
 
 K_EVENT_DEFINE(toggle_scan_type_event);
 K_MSGQ_DEFINE(bt_process_msgq, sizeof(struct bt_scan_result), 16, 1);
+K_MSGQ_DEFINE(bt_data_req_msgq, sizeof(struct bt_data_req), 16, 1);
 
 K_THREAD_DEFINE(bt_scan_thread_tid, BT_SCAN_THREAD_STACK_SIZE, bt_scan, NULL, NULL, NULL, BT_SCAN_THREAD_PRIORITY, 0, 0);
 K_THREAD_DEFINE(bt_process_thread_tid, BT_PROCESS_THREAD_STACK_SIZE, bt_process, NULL, NULL, NULL, BT_PROCESS_THREAD_PRIORITY, 0, 0);
 
-
+static struct datum *database = NULL;
 static int enable_active = 1;
 
 /**
@@ -52,7 +54,7 @@ static void bt_scan(void *, void *, void *) {
                 LOG_DBG("Received request to set BT scan type to active");
                 bt_scan_params.type = BT_LE_SCAN_TYPE_ACTIVE;
             } else {
-                LOG_INF("Recevied request to set BT scan type to passive");
+                LOG_INF("Received request to set BT scan type to passive");
                 bt_scan_params.type = BT_LE_SCAN_TYPE_PASSIVE;
             }
 
@@ -107,17 +109,47 @@ static void bt_scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, stru
 }
 
 /**
- * @brief Processes an incoming Bluetooth scan result
+ * @brief Processes all data operations for Bluetooth scan packets. This thread
+ * will handle incoming data, data retrieval requests, and data clearing requests.
+ * 
+ * It is important to note that insertion of new data will always occur before a
+ * data request is processed.
  */
 static void bt_process(void *, void *, void *) {
+    extern struct k_event data_print_rdy_event;
 
     while (1) {
         struct bt_scan_result scan_result;
+        struct bt_data_req data_request;
 
-        if (k_msgq_get(&bt_process_msgq, &scan_result, K_FOREVER) == 0) {
+        if (k_msgq_get(&bt_process_msgq, &scan_result, K_NO_WAIT) == 0) {
             LOG_INF("Device found: %s with address %s (RSSI %d), type %u, AD data len %u",
 	           scan_result.device_name, scan_result.addr_str, scan_result.rssi, scan_result.type, scan_result.ad->len);
+
+            struct bt_scan_obsv scan_observation = {
+                .addr = scan_result.addr_str,
+                .rssi = scan_result.rssi
+            };
+
+            strncpy(scan_observation.device_name, scan_result.device_name, BT_MAX_DEVICE_NAME_LEN);
+
+            upsert(&database, &scan_observation);
         }
+
+        if (k_msgq_get(&bt_data_req_msgq, &data_request, K_NO_WAIT) == 0) {
+            if (data_request.request_type == BT_DATA_REQ_GET || data_request.request_type == BT_DATA_REQ_PRINT){
+                data_request.result_list = get(database, data_request.get_count);
+            } else if (data_request.request_type == BT_DATA_REQ_CLEAR) {
+                clear(&database);
+            }
+
+            if (data_request.request_type == BT_DATA_REQ_PRINT) {
+                k_event_set(&data_print_rdy_event, 1);
+            }
+        };
+
+        k_msleep(100);
+        
     }
 }
 
