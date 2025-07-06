@@ -1,3 +1,15 @@
+# System Interaction
+The system composes of 3 main pieces:
+- Observation collection
+- Display
+- CLI
+
+The central part is the observation collection subsystem which performs scans and processes them. It consists
+of two threads: a scanning thread and a data processing thread.
+
+The CLI and display subsystems interface with this observaiton collection subsystem to provide data to
+the end user.
+
 # Observation Collection
 Zephyr provides a robust Bluetooth stack with support for Bluetooth 4.1. For the operation
 of our device, we will be utilizing the observer GAP profile which is a low-energy
@@ -59,7 +71,7 @@ singly linked list.
 A very basic linked list is defined in `bt_db.h` and `bt_db.c`. The nodes on the linked list are
 defined on the default system heap whose size is configured via the follwoing Kconfig option:
 ```
-`CONFIG_HEAP_MEM_POOL_SIZE=4096`
+CONFIG_HEAP_MEM_POOL_SIZE=4096
 ```
 
 The linked list has an invariant mandating that it is sorted by the RSSI value of each Bluetooth scan
@@ -141,6 +153,11 @@ packets.
 After all data is collected, the state of the LCD screen is updated and then the thread waits for
 10ms before refreshing. This will allow for us to meet the minimum update latency of 500ms described
 in the [requirements](software_requirements) document.
+
+## Process Flow Diagram
+The following diagram details the superloop behavior of the main thread:
+
+![Main superloop process flow diagram](images/main_superloop.png)
 
 # CLI
 The CLI will provide two commands part of a command set:
