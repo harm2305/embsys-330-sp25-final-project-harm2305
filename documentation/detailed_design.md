@@ -1,14 +1,41 @@
 # System Interaction
-The system composes of 3 main pieces:
+The system composes of 4 main pieces:
 - Observation collection
 - Display
 - CLI
+- Database backed by a linked list
 
 The central part is the observation collection subsystem which performs scans and processes them. It consists
 of two threads: a scanning thread and a data processing thread.
-
 The CLI and display subsystems interface with this observation collection subsystem to provide data to
 the end user.
+
+The following diagram provides a detailed view of different parts of the system and how they communicate:
+![System interaction diagram](images/system_interaction_diagram.png)
+
+There is a heavy use of asynchronous communication between all parts of the system. Notably, the use
+of `k_event`s and `k_msgq`s allow for us to decouple different parts of the application so each part
+only does one thing and does it well.
+
+The shell commands all post to a message queue defined by:
+```K_MSGQ_DEFINE(bt_data_req_msgq, sizeof(struct bt_data_req), 16, 1)```
+whose only job is to process different data related operations such as inserting, retrieving,
+or clearing data. This message queue is also used elsewhere through the application such as
+the UI for retrieving data and the scanning thread to provide new scan observations that need
+to be queued.
+
+The data processing thread is responsible for being a single point of access to all data.
+This is due to the fact that the the in-memory database is backed by a thread **unsafe** linked list.
+This design could be improved through the use of a semaphore or a mutex but there was not enough time
+to explore this. As such, all the list operations occur from a single thread, the data processing thread.
+Given that the list is unsafe, there is quite a bit of bloat between consumers of data and the data itself.
+Reliance on message queues and events provide a quick and easy solution but this design can most definitely
+be improved.
+
+The main display superloop communications with the observation subsystem using a `k_event` and
+a `k_msgq`. The `k_event` provides a lightweight way for us to notify that processing thread
+that the scan type needs to be updated. The `k_msg` is used to queue up data operations
+for reading observations.
 
 # Observation Collection
 Zephyr provides a robust Bluetooth stack with support for Bluetooth 4.1. For the operation
@@ -66,6 +93,41 @@ Data processing occurs in its own thread. The data processing waits on the messa
 defined as `K_MSGQ_DEFINE(bt_process_msgq, sizeof(struct bt_scan_result), 16, 1)`. When a new message
 is received, an upsert operation is executed to load the data into the in-memory database backed by a
 singly linked list.
+
+A second message queue is responsible for receiving new data requests such as reading and clearing data.
+It is important to note that data insertion will always occur before and retrieval or deletion operation.
+In the following sequence of events:
+1. Shell command issued to clear data
+2. Scan processing request is queued
+
+the scan processing request will always be handled first and then the data operation. This is intentional
+as depending on how scanning is configured, the number of scans and the velocity they arrive at can be very
+high. Data operations may take a while depending on the size of the list so it is important that the message
+queue does not get too full with new scan processing requests while data operations are going on.
+
+It is important to note that polling for both the event and the message queue in this thread should be done
+without waiting. If a message or event is not available, the thread execution should continue without waiting.
+This ensures that one particular operation does not have to wait too long just because another event
+or message has not been received.
+
+Data requests come in through a `struct bt_data_req`. `bluetooth.h` defines the following constants that control
+what type of data operation will happen:
+- `BT_DATA_REQ_CLEAR`
+- `BT_DATA_REQ_GET`
+- `BT_DATA_REQ_PRINT`
+
+Depending on what type of request is given, only some members of the struct need to be defined.
+For `BT_DATA_REQ_CLEAR`, no other struct members need to be defined as no data is being returned.
+
+For `BT_DATA_REQ_GET` and `BT_DATA_REQ_PRINT`, `bt_data_req.result_list` must be a valid pointer
+for the type `struct datum`. It is required that this pointer points to memory allocated
+on the heap as the data processing thread is dereference it and place a node that that holds data
+for the output of a get query. `bt_data_req.get_count` must also be defined with the number of
+observations to retrieve.
+
+`BT_DATA_REQ_GET` and `BT_DATA_REQ_PRINT` are two separate requests types as the latter one will post
+to a `k_event` to notify that data is ready to be printed. The `BT_DATA_REQ_PRINT` request type
+is intended only to be used the CLI. Use of the `k_event` is detailed [below](#cli).
 
 ### Linked List and Upserts
 A very basic linked list is defined in `bt_db.h` and `bt_db.c`. The nodes on the linked list are
@@ -203,5 +265,20 @@ Retrieves `n` observations from the database. Will return an error if a value `<
 command will output the collected observations in a CSV format to the terminal for easy viewing.
 
 ## `database clear`
-The DB clear command will wipe the contents of the in-memory database as well as any tracked metrics
+The `database clear` command will wipe the contents of the in-memory database as well as any tracked metrics
 such as total scans and unique devices.
+
+## Architecture
+For communication between threads, the CLI subsystem relies on a `k_msgq` and a `k_event`. The message queue
+is used for passing data requests to the observaton subsystem and
+is described in [Data Processing](#data-processing).
+
+There is a `k_event` called `data_print_rdy_event`. This is used by the data processing thread
+to notify the CLI when data is ready to be printed out to the terminal. When the CLI
+submits a `BT_DATA_REQ_PRINT` request, the data is obtained from the database and then the
+data processing thread will alert by posting to the event. This allows for asynchronous
+communication and the use of `K_FOREVER` ensures that these operations are not blocking while
+they are waiting for data.
+
+Once an event is posted to `data_print_rdy_event`, the scan results are then printed out to the
+terminal through the use of `shell_print()`.
