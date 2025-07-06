@@ -61,3 +61,9 @@ struct bt_data_req {
  * @returns True if currently in active scan mode, false if passive.
  */
  bool get_current_scan_mode();
+
+ /**
+  * @brief Returns the count of advertising packets
+  * scanned
+  */
+ uint8_t get_total_scans();

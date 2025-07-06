@@ -21,6 +21,7 @@
 #define COLOR_GREEN 0x00FF00
 #define COLOR_GRAY 0x2D3639
 #define COLOR_LIGHT_GRAY 0x6F8187
+#define COLOR_WHITE 0xFFFFFF
 
 static void set_default_box_styling(lv_obj_t *box);
 static void set_scan_label(lv_obj_t *label, bool scan_mode);
@@ -139,11 +140,22 @@ int main(void)
 	lv_obj_t *scan_label = lv_label_create(lv_scr_act());
 	lv_obj_align(scan_label, LV_ALIGN_TOP_LEFT, 5, 10);
 
+	lv_obj_t *scan_count_label = lv_label_create(lv_scr_act());
+	lv_obj_align(scan_count_label, LV_ALIGN_TOP_RIGHT, 0, 10);
+	lv_obj_set_style_text_color(scan_count_label, lv_color_hex(COLOR_WHITE), 0);
+
+	char scan_count_str[11] = {0};
+
 	lv_task_handler();
 	display_blanking_off(display_dev);
 
 	while (1) {
 		bool scan_mode = get_current_scan_mode();
+		uint8_t scan_count = get_total_scans();
+
+		sprintf(scan_count_str, "Scans: %d", scan_count);
+		lv_label_set_text(scan_count_label, scan_count_str);
+
 		set_scan_label(scan_label, scan_mode);
 		lv_task_handler();
 		k_sleep(K_MSEC(10));

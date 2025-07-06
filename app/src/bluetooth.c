@@ -21,6 +21,7 @@ K_THREAD_DEFINE(bt_process_thread_tid, BT_PROCESS_THREAD_STACK_SIZE, bt_process,
 
 static struct datum *database = NULL;
 static int enable_active = 1;
+static uint8_t scan_count = 0;
 
 /**
  * @brief Enables Bluetooth, initializes callbacks, and begins scanning for devices.
@@ -84,6 +85,7 @@ static void bt_scan(void *, void *, void *) {
  * and submits to a queue for processing later in a separate thread.
  */
 static void bt_scan_cb(const bt_addr_le_t *addr, int8_t rssi, uint8_t type, struct net_buf_simple *ad) {
+    scan_count++;
 	char addr_str[BT_ADDR_LE_STR_LEN];
 	char name[BT_MAX_DEVICE_NAME_LEN] = {0};
 
@@ -181,4 +183,9 @@ bool get_current_scan_mode() {
     }
     
     return false;
+}
+
+
+uint8_t get_total_scans() {
+    return scan_count;
 }
