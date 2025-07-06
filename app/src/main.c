@@ -22,9 +22,11 @@
 #define COLOR_GRAY 0x2D3639
 #define COLOR_LIGHT_GRAY 0x6F8187
 #define COLOR_WHITE 0xFFFFFF
+#define COLOR_BLACK 0x000000
 
 static void set_default_box_styling(lv_obj_t *box);
 static void set_scan_label(lv_obj_t *label, bool scan_mode);
+static void render_scan_table(lv_coord_t y_offset);
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
@@ -144,6 +146,8 @@ int main(void)
 	lv_obj_align(scan_count_label, LV_ALIGN_TOP_RIGHT, 0, 10);
 	lv_obj_set_style_text_color(scan_count_label, lv_color_hex(COLOR_WHITE), 0);
 
+	render_scan_table(top_bar_height);
+
 	char scan_count_str[11] = {0};
 
 	lv_task_handler();
@@ -184,4 +188,26 @@ static void set_scan_label(lv_obj_t *label, bool scan_mode) {
 		lv_label_set_text(label, "PASSIVE");
 		lv_obj_set_style_text_color(label, lv_color_hex(COLOR_RED), 0);
 	}
+}
+
+/**
+ * @brief Renders the scans table
+ * 
+ * @param y_offset The vertical offset from the top of the screen
+ */
+static void render_scan_table(lv_coord_t y_offset) {
+	lv_obj_t *name_header = lv_label_create(lv_scr_act());
+	lv_obj_align(name_header, LV_ALIGN_TOP_LEFT, 0, y_offset);
+	lv_obj_set_style_text_color(name_header, lv_color_hex(COLOR_BLACK), 0);
+	lv_label_set_text(name_header, "Name");
+
+	lv_obj_t *addr_header = lv_label_create(lv_scr_act());
+	lv_obj_align(addr_header, LV_ALIGN_TOP_MID, 0, y_offset);
+	lv_obj_set_style_text_color(addr_header, lv_color_hex(COLOR_BLACK), 0);
+	lv_label_set_text(addr_header, "Address");
+
+	lv_obj_t *rssi_header = lv_label_create(lv_scr_act());
+	lv_obj_align(rssi_header, LV_ALIGN_TOP_RIGHT, 0, y_offset);
+	lv_obj_set_style_text_color(rssi_header, lv_color_hex(COLOR_BLACK), 0);
+	lv_label_set_text(rssi_header, "RSSI");
 }
