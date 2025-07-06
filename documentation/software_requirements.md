@@ -1,10 +1,11 @@
 # Requirements
 
 ## Architectural
-- Use of an LCD shield to provide a user interface
-- Use of a Bluetooth sensor to gather beacon advertising packets
-- Use of a USART terminal to interface with the device
-- Use of an onboard user action button to toggle between scan types
+- Must use an LCD shield to provide a user interface
+- Must use a Bluetooth sensor to gather beacon advertising packets
+- Must use a USART terminal to interface with the device
+- Must use an onboard user action button to toggle between scan types
+- Must limit hardware to what is available on the board to reduce costs
 
 ## Functional Requirements
 - Device should boot up in active scanning mode
@@ -17,14 +18,14 @@
 - Repeat devices detected should not result in repeat observations
 - LCD screen should display the closest Bluetooth beacons detected
 - LCD screen readings should include address, device name (if available), and RSSI signal strength
-- Allow for clearing of the in memory database to reduce memory footprint
+- Must allow for clearing of the in memory database to reduce memory footprint
 
 ## Non-functional Requirements
 - The 5 closest Bluetooth devices should be shown on the LCD screen
 - Data access should not block collection observations
     - Reading/writing data should not block the system preventing new observations
 - LCD screen should be updated with new data in a near-real time fashion, with at most 500ms latency
-- Proximity of devices must be  measured via [RSSI (received signal strength indicator)](https://en.wikipedia.org/wiki/Received_signal_strength_indicator) values
+- Proximity of devices must be measured via [RSSI (received signal strength indicator)](https://en.wikipedia.org/wiki/Received_signal_strength_indicator) values
 
 ## Regulatory Compliance
 - The use of wireless communication implies compliance with the FCC
