@@ -7,26 +7,26 @@ The system composes of 3 main pieces:
 The central part is the observation collection subsystem which performs scans and processes them. It consists
 of two threads: a scanning thread and a data processing thread.
 
-The CLI and display subsystems interface with this observaiton collection subsystem to provide data to
+The CLI and display subsystems interface with this observation collection subsystem to provide data to
 the end user.
 
 # Observation Collection
 Zephyr provides a robust Bluetooth stack with support for Bluetooth 4.1. For the operation
-of our device, we will be utilizing the observer GAP profile which is a low-energy
+of our device, we will be utilizing the observer GAP profile which is a low-energy,
 connection-less Bluetooth role. 
 
 ## Scanning
-Scanning and processing scans are done in their own thread. This will allow for data operations
-to not be blocked and ensure that the LCD is up to date.
+Scanning and processing scans are each done in their own thread. This will allow for data operations
+to not be blocked and ensure that the LCD screen is up to date.
 
 ### Configuration
 At thread startup, the Bluetooth stack is enabled via `bt_enable()`. Once that is successful,
-configuration for scanning is simple done by definining a `struct bt_le_scan_param` and
+configuration for scanning is simply done by definining a `struct bt_le_scan_param` and
 assigning each member of the struct the appropriate value.
 
 The `type` value of the scan parameters indicates why type of scanning to do. The system starts
 with that value set to `BT_LE_SCAN_TYPE_ACTIVE` and is then toggled via a user action button
-described below. A `k_event` is configured and awaited during thread operation.
+as described below. A `k_event` is configured and awaited indefinitely during thread operation.
 When a new event is received, the scan type is toggled between active or passive.
 Then, scanning is restarted to load in the new configuration.
 
@@ -41,7 +41,7 @@ which indicates to scan every 2.56 seconds. The window is set to `BT_GAP_SCAN_FA
 meaning that that the window is 30ms large.
 
 The final member of the scan parameters is the `option` field which we have set to
-`BT_LE_SCAN_OPT_FILTER_DUPLICATE` to avoid duplicate scan parameters.
+`BT_LE_SCAN_OPT_FILTER_DUPLICATE` to filter out duplicates.
 
 ### Scan Processing
 
@@ -53,8 +53,8 @@ observations and load them into the database.
  
 ### Button Configuration
 The user action button is configured on GPIO port C pin 13 in a active low configuration. We can register
-this with an ISR. On a button press, a simple event is sent using Zephyr events via `k_event_set` which
-is ready by this scanning thread.
+this with an ISR in the main thread. On a button press, a simple event is sent using Zephyr events via
+`k_event_set` which is read by this scanning thread.
 
 ### Process Flow
 The scan initialization and configuration is described by the following process flow:
@@ -67,7 +67,7 @@ defined as `K_MSGQ_DEFINE(bt_process_msgq, sizeof(struct bt_scan_result), 16, 1)
 is received, an upsert operation is executed to load the data into the in-memory database backed by a
 singly linked list.
 
-### Linked List
+### Linked List and Upserts
 A very basic linked list is defined in `bt_db.h` and `bt_db.c`. The nodes on the linked list are
 defined on the default system heap whose size is configured via the follwoing Kconfig option:
 ```
@@ -82,9 +82,28 @@ not have a computationally expensive system, we can afford the hit on CPU comput
 Each node in the linked list is defined by `struct datum` which contains a pointer to a scan
 observation and a pointer to the next element in the list.
 
+The primary use of the linked list to support an upsert operation wherein packets that are for devices
+not already in the data structure are appended. Packets that are for devices in the data stucture instead
+trigger and upate of the existing node. This helps avoid duplicate entries and keep the memory footprint low.
+
 #### Supported Functionality
 The public API of the linked list supports the following operations:
 ```C
+/**
+ * bt_db represents an internal database backed by a singly linked
+ * list. Each node represents a particular reading from a Bluetooth advertising
+ * packet. 
+ * 
+ * The database is sorted by RSSI values, with lowest appearing at the start of the
+ * list. Lower RSSI values correlate to higher signal strength.
+ */
+
+struct datum {
+    struct bt_scan_obsv *data;
+    struct datum *next;
+};
+
+
 /**
  * @brief Returns the length of the list
  */
@@ -115,6 +134,13 @@ void upsert(struct datum **head, struct bt_scan_obsv *data);
  * holding no reference to entire list. This is to avoid accidental data manipulation.
  */
 struct datum * get(struct datum *head, int n);
+
+/**
+ * @brief Clears all data stored in the in-memory database list.
+ * 
+ * @param head Pointer to a pointer to start of the list
+ */
+void clear(struct datum **head);
 ```
 
 The two important functions are `void upsert(struct datum **head, struct bt_scan_obsv *data)`
