@@ -129,10 +129,10 @@ static void bt_process(void *, void *, void *) {
 	           scan_result.device_name, scan_result.addr_str, scan_result.rssi, scan_result.type, scan_result.ad->len);
 
             struct bt_scan_obsv scan_observation = {
-                .addr = scan_result.addr_str,
                 .rssi = scan_result.rssi
             };
 
+            strncpy(scan_observation.addr, scan_result.addr_str, BT_ADDR_LE_STR_LEN);
             strncpy(scan_observation.device_name, scan_result.device_name, BT_MAX_DEVICE_NAME_LEN);
 
             upsert(&database, &scan_observation);

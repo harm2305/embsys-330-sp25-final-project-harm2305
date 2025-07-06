@@ -1,3 +1,5 @@
+#include <zephyr/bluetooth/bluetooth.h>
+
 // Device name cannot be longer than 30 due to the size of a packet
 #define BT_DATA_REQ_CLEAR 1
 #define BT_DATA_REQ_GET 2
@@ -31,7 +33,7 @@ struct bt_scan_result {
  * of time for an observation.
  */
 struct bt_scan_obsv {
-    char *addr;
+    char addr[BT_ADDR_LE_STR_LEN];
     char device_name[BT_MAX_DEVICE_NAME_LEN];
     int8_t rssi;
 };
