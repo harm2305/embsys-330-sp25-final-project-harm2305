@@ -16,7 +16,6 @@
 #include <lvgl_input_device.h>
 
 #include "bluetooth.h"
-#include "counter.h"
 
 #define COLOR_RED 0xFF0000
 #define COLOR_GREEN 0x00FF00
