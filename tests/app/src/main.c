@@ -293,3 +293,34 @@ ZTEST_F(embsys330_fp_tests, test_excessive_retrieval) {
 	zassert_equal(len(head), 3, "Original list of length %d does not match expected length of 3", len(head));
 	zassert_equal(len(retrieval_list), 3, "Retrieval of 100 nodes from a list of length 3 returns %d nodes, should return 3", len(retrieval_list));
 }
+
+/**
+ * Test clearing behavior of the list
+ */
+ZTEST_F(embsys330_fp_tests, test_clear) {
+	struct datum *head = fixture->head;
+
+	struct bt_scan_obsv *node1 = malloc(sizeof(struct bt_scan_obsv));
+	node1->addr = "addr1";
+	node1->rssi = -10;
+	strncpy(node1->device_name, "node1", BT_MAX_DEVICE_NAME_LEN);
+
+	struct bt_scan_obsv *node2 = malloc(sizeof(struct bt_scan_obsv));
+	node2->addr = "addr2";
+	node2->rssi = -20;
+	strncpy(node2->device_name, "node2", BT_MAX_DEVICE_NAME_LEN);
+
+	struct bt_scan_obsv *node3 = malloc(sizeof(struct bt_scan_obsv));
+	node3->addr = "addr3";
+	node3->rssi = -20;
+	strncpy(node3->device_name, "node3", BT_MAX_DEVICE_NAME_LEN);
+
+	upsert(&head, node1);
+	upsert(&head, node2);
+	upsert(&head, node3);
+
+	clear(&head);
+
+	zassert_equal(head, NULL, "List pointer is not null after clearing list");
+	zassert_equal(len(head), 0, "Length of %d does not match expected length of 0 after clearing list", len(head));
+}

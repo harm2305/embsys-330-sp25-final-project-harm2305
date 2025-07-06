@@ -43,3 +43,10 @@ void upsert(struct datum **head, struct bt_scan_obsv *data);
  * holding no reference to entire list. This is to avoid accidental data manipulation.
  */
 struct datum * get(struct datum *head, int n);
+
+/**
+ * @brief Clears all data stored in the in-memory database list.
+ * 
+ * @param head Pointer to a pointer to start of the list
+ */
+void clear(struct datum **head);

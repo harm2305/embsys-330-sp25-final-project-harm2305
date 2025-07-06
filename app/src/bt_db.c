@@ -149,3 +149,16 @@ struct datum * get(struct datum *head, int n) {
 
     return result;
 }
+
+void clear(struct datum **head) {
+    struct datum *current = *head;
+    struct datum *next;
+
+    while (current != NULL) {
+        next = current->next;
+        k_free(current);
+        current=next;
+    }
+
+    *head = NULL;
+}
